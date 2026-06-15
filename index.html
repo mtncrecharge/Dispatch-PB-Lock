@@ -1613,8 +1613,12 @@ function switchTab(name) {
 
   if (name === 'pblock' && !_pbLockInited) {
     _pbLockInited = true;
-    // Delay slightly so DOM is visible before loadData
     setTimeout(() => { pb_loadData(); }, 80);
+  }
+
+  // Refresh dispatch data saat balik ke tab dispatch (mungkin udah stale)
+  if (name === 'dispatch' && CURRENT_USER) {
+    setTimeout(() => loadData(), 80);
   }
 }
 
@@ -1970,6 +1974,10 @@ function isQuietHour(){
 }
 
 // ── Load data ──
+function isDispatchActive() {
+  return document.getElementById('tab-dispatch').classList.contains('active');
+}
+
 async function loadData(force=false){
   // Kalau role tech dan belum ON, skip load dispatch
   if(CURRENT_USER && CURRENT_USER.role==='tech' && !isTracking){
@@ -1980,7 +1988,7 @@ async function loadData(force=false){
     document.getElementById('cnt').textContent='0 tiket';
     return;
   }
-  document.getElementById('rtime').textContent='Memuat...';
+  if (isDispatchActive()) document.getElementById('rtime').textContent='Memuat...';
   try{
     const t=await fetchCSV(CSV_URL);
     const parsed=parseCSV(t).slice(1)
@@ -2556,7 +2564,7 @@ const obs=new IntersectionObserver(entries=>{
 obs.observe(document.getElementById('map'));
 
 // Start — restore session kalau ada
-setInterval(()=>{if(CURRENT_USER)loadData();},60*1000);
+setInterval(()=>{if(CURRENT_USER && isDispatchActive())loadData();},60*1000);
 (function restoreSession(){
   try{
     const saved = localStorage.getItem('dispatch_session');
