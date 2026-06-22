@@ -1952,9 +1952,11 @@ function doLogout(){
   document.getElementById('loginName').value = '';
   document.getElementById('loginPass').value = '';
   document.getElementById('loginErr').textContent = '';
-  document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('tbody').innerHTML = '';
   document.getElementById('summary').innerHTML = '';
+  // Switch ke dispatch dulu biar login screen keliatan
+  switchTab('dispatch');
+  document.getElementById('loginScreen').style.display = 'flex';
 }
 
 // ── Renew session expiry saat user aktif ──
