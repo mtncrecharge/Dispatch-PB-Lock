@@ -2167,6 +2167,16 @@ async function loadDurasi(){
       if(r.ts>techMap[r.tech].last)techMap[r.tech].last=r.ts;
       techMap[r.tech].count++;
     });
+    // Build done/total assignment map from DATA
+    const assignMap = {};
+    DATA.forEach(r => {
+      if (!r.tech) return;
+      if (!assignMap[r.tech]) assignMap[r.tech] = {done:0, total:0};
+      assignMap[r.tech].total++;
+      const st = (r.status||'').toLowerCase();
+      if (st === 'done' || st === 'selesai' || st === 'closed' || st === 'close') assignMap[r.tech].done++;
+    });
+
     const entries=Object.entries(techMap).sort((a,b)=>b[1].count-a[1].count);
     const maxMin=entries.length?Math.max(...entries.map(([,v])=>(v.last-v.first)/60000)):0;
     const fmt=ts=>ts.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
@@ -2182,6 +2192,9 @@ async function loadDurasi(){
       const durStr=totalMin===0?'< 1m':(h>0?`${h}j ${m}m`:`${m}m`);
       const pct=maxMin>0?Math.round((totalMin/maxMin)*100):0;
       const init=tech.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      const am = assignMap[tech] || {done:0, total:0};
+      const assignStr = am.total > 0 ? `${am.done}/${am.total}` : '—';
+      const assignColor = am.total === 0 ? 'var(--muted)' : am.done === am.total ? 'var(--green)' : am.done > 0 ? '#f59e0b' : 'var(--red)';
       return`<div class="dur-card">
         <div class="dur-avatar">${init}</div>
         <div class="dur-info">
@@ -2191,13 +2204,18 @@ async function loadDurasi(){
         </div>
         <div class="dur-right">
           <div class="dur-dur">${durStr}</div>
-          <div class="dur-jobs">${v.count} job</div>
+          <div class="dur-jobs" style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+            <span>${v.count} form</span>
+            <span style="font-size:10px;font-weight:700;color:${assignColor}">${assignStr} selesai</span>
+          </div>
         </div>
       </div>`;
     });
 
     const inactiveCards = inactiveTechs.map(tech=>{
       const init=tech.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      const ami = assignMap[tech] || {done:0, total:0};
+      const assignStri = ami.total > 0 ? `${ami.done}/${ami.total}` : '—';
       return`<div class="dur-card inactive">
         <div class="dur-avatar" style="background:rgba(255,82,82,0.15);color:#ff5252;border:1px solid rgba(255,82,82,0.3)">${init}</div>
         <div class="dur-info">
@@ -2207,7 +2225,10 @@ async function loadDurasi(){
         </div>
         <div class="dur-right">
           <div class="dur-dur" style="color:#ff5252">—</div>
-          <div class="dur-jobs">0 job</div>
+          <div class="dur-jobs" style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+            <span>0 form</span>
+            <span style="font-size:10px;font-weight:700;color:var(--red)">${assignStri} selesai</span>
+          </div>
         </div>
       </div>`;
     });
